@@ -1,0 +1,67 @@
+syntax = "v1"
+
+type (
+	// 鉴权token
+	Token {
+		AccessToken  string `json:"access_token"`
+		AccessExpire int64  `json:"access_expire"`
+	}
+	// 注册请求
+	RegisterRequest {
+		Name             string `json:"name"`
+		Mobile           string `json:"mobile"`
+		Password         string `json:"password"`
+		VerificationCode string `json:"verification_code"`
+	}
+	// 注册响应
+	RegisterResponse {
+		UserId int64 `json:"user_id"`
+		Token  Token `json:"token"`
+	}
+	// 手机验证
+	VerificationRequest {
+		Mobile string `json:"mobile"`
+	}
+	// 手机验证
+	VerificationResponse {
+	}
+	// 用户密码登录
+	LoginRequest {
+		Mobile           string `json:"mobile"`
+		VerificationCode string `json:"verification_code"`
+	}
+	// 用户密码登录响应
+	LoginResponse {
+		UserId int64 `json:"userId"`
+		Token  Token `json:"token"`
+	}
+	// 用户信息
+	UserInfoResponse {
+		UserId   int64  `json:"user_id"`
+		Username string `json:"username"`
+		Avatar   string `json:"avatar"`
+	}
+)
+
+@server (
+	prefix: /v1
+)
+service applet-api {
+	@handler RegisterHandler
+	post /register (RegisterRequest) returns (RegisterResponse)
+	@handler VerificationHandler
+	post /verification (VerificationRequest) returns (VerificationResponse)
+	@handler LoginHandler
+	post /login (LoginRequest) returns (LoginResponse)
+}
+
+// 需要鉴权
+@server (
+	prefix: /v1/user
+	signature: true
+	jwt: Auth
+)
+service applet-api {
+	@handler UserInfoHandler
+	get /info returns (UserInfoResponse)
+}
