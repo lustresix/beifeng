@@ -17,6 +17,7 @@ var configFile = flag.String("f", "etc/applet-api.yaml", "the config file")
 func main() {
 	flag.Parse()
 
+	// 读取配置文件
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 

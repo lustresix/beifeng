@@ -1,3 +1,19 @@
 Name: applet-api
 Host: 0.0.0.0
 Port: 8888
+Auth:
+  AccessSecret: lustresix
+  AccessExpire: 604800
+  RefreshSecret: lustresix
+  RefreshExpire: 2592000
+  RefreshAfter: 604800
+UserRPC:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: user.rpc
+  NonBlock: true
+BfRedis:
+  Host: 127.0.0.1:36379
+  Pass: "123456789"
+  Type: node
