@@ -11,4 +11,7 @@ var (
 
 	// CannotFindUser 找不到用户
 	CannotFindUser = xcode.New(20001, "找不到用户")
+
+	// IdEmpty 用户Id为空
+	IdEmpty = xcode.New(20001, "用户Id为空")
 )

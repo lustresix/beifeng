@@ -69,14 +69,16 @@ func (l *RegisterLogic) Register(req *types.RegisterRequest) (resp *types.Regist
 	users, err := l.svcCtx.UserRPC.FindByMobile(l.ctx, &user.FindByMobileRequest{
 		Mobile: encMobile,
 	})
+	fmt.Println(err)
 	if err != nil {
 		logx.Errorf("UserRPC FindByMobile error: %v", err)
 		return nil, err
 	}
+	fmt.Println(22222)
 	if users != nil && users.UserId > 0 {
 		return nil, e.MobileHasRegistered
 	}
-
+	fmt.Println(users, err)
 	// 注册
 	registerResponse, err := l.svcCtx.UserRPC.Register(l.ctx, &user.RegisterRequest{
 		Username: req.Name,

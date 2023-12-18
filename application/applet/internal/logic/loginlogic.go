@@ -47,7 +47,7 @@ func (l *LoginLogic) Login(req *types.LoginRequest) (resp *types.LoginResponse, 
 	}
 
 	// 再验证号码是否存在
-	mobile, err := encrypt.DecMobile(req.Mobile)
+	mobile, err := encrypt.EncMobile(req.Mobile)
 	if err != nil {
 		logx.Errorf("DecMobile error: %v", err)
 		return nil, err

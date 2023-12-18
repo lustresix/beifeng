@@ -4,3 +4,12 @@ Etcd:
   Hosts:
     - 127.0.0.1:20179
   Key: user.rpc
+DataSource: root:123456@tcp(127.0.0.1:3307)/beyond_user?parseTime=true
+BfRedis:
+  Host: 127.0.0.1:36379
+  Pass: "123456789"
+  Type: node
+CacheRedis:
+  - Host: 127.0.0.1:36379
+    Pass: "123456789"
+    Type: node

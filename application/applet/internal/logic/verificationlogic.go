@@ -18,7 +18,7 @@ import (
 const (
 	// 加盐
 	prefixVerificationCount = "bf#verification#count#%s"
-	prefixActivation        = "biz#activation#%s"
+	prefixActivation        = "bf#activation#%s"
 
 	// 每个用户限制一天只能发十次验证码
 	verificationLimitPerDay = 10
@@ -51,10 +51,11 @@ func (l *VerificationLogic) Verification(req *types.VerificationRequest) (resp *
 	}
 	// 是否已经获取过code了
 	code, _ := getActivationCache(req.Mobile, l.svcCtx.BfRedis)
-	if code == "" {
+	if len(code) == 0 {
 		code = util.RandomNumeric(6)
 	}
-	// 发送短信
+
+	// 发送短信 TODO:SendSms
 	_, err = l.svcCtx.UserRPC.SendSms(l.ctx, &user.SendSmsRequest{
 		Mobile: req.Mobile,
 	})

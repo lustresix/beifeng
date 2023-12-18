@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"github.com/lustresix/beifeng/application/user/rpc/internal/e"
 
 	"github.com/lustresix/beifeng/application/user/rpc/internal/svc"
 	"github.com/lustresix/beifeng/application/user/rpc/service"
@@ -24,7 +25,21 @@ func NewFindByIdLogic(ctx context.Context, svcCtx *svc.ServiceContext) *FindById
 }
 
 func (l *FindByIdLogic) FindById(in *service.FindByIdRequest) (*service.FindByIdResponse, error) {
-	// todo: add your logic here and delete this line
-
-	return &service.FindByIdResponse{}, nil
+	if in.UserId == 0 {
+		return nil, e.IdEmpty
+	}
+	findUser, err := l.svcCtx.UserModel.FindOne(l.ctx, in.UserId)
+	if err != nil {
+		logx.Errorf("UserModel FindOne error: %v", err)
+		return nil, err
+	}
+	if findUser == nil || findUser.Id == 0 {
+		return nil, e.CannotFindUser
+	}
+	return &service.FindByIdResponse{
+		UserId:   findUser.Id,
+		Username: findUser.Username,
+		Avatar:   findUser.Avatar,
+		Mobile:   findUser.Mobile,
+	}, nil
 }

@@ -10,7 +10,7 @@ Auth:
 UserRPC:
   Etcd:
     Hosts:
-      - 127.0.0.1:2379
+      - 127.0.0.1:20179
     Key: user.rpc
   NonBlock: true
 BfRedis:

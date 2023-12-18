@@ -30,7 +30,8 @@ func (l *FindByMobileLogic) FindByMobile(in *service.FindByMobileRequest) (*serv
 	}
 	users, err := l.svcCtx.UserModel.FindOneByMobile(l.ctx, in.Mobile)
 	if err != nil || users == nil {
-		return nil, e.CannotFindUser
+		logx.Errorf("UserModel FindOne error: %v", e.CannotFindUser)
+		return nil, nil
 	}
 
 	return &service.FindByMobileResponse{

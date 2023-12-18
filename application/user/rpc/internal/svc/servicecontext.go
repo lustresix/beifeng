@@ -12,7 +12,6 @@ type ServiceContext struct {
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
-	// todo: 数据库还没连
 	conn := sqlx.NewMysql(c.DataSource)
 
 	return &ServiceContext{
