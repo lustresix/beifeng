@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"github.com/lustresix/beifeng/application/user/rpc/internal/e"
 
 	"github.com/lustresix/beifeng/application/user/rpc/internal/svc"
 	"github.com/lustresix/beifeng/application/user/rpc/service"
@@ -24,7 +25,18 @@ func NewFindByMobileLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Find
 }
 
 func (l *FindByMobileLogic) FindByMobile(in *service.FindByMobileRequest) (*service.FindByMobileResponse, error) {
-	// todo: add your logic here and delete this line
+	if len(in.Mobile) == 0 {
+		return nil, e.MobileEmpty
+	}
+	users, err := l.svcCtx.UserModel.FindOneByMobile(l.ctx, in.Mobile)
+	if err != nil || users == nil {
+		return nil, e.CannotFindUser
+	}
 
-	return &service.FindByMobileResponse{}, nil
+	return &service.FindByMobileResponse{
+		UserId:   users.Id,
+		Username: users.Username,
+		Mobile:   users.Mobile,
+		Avatar:   users.Avatar,
+	}, nil
 }

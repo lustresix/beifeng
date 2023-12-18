@@ -50,7 +50,7 @@ func (l *VerificationLogic) Verification(req *types.VerificationRequest) (resp *
 		return nil, err
 	}
 	// 是否已经获取过code了
-	code, err := getActivationCache(req.Mobile, l.svcCtx.BfRedis)
+	code, _ := getActivationCache(req.Mobile, l.svcCtx.BfRedis)
 	if code == "" {
 		code = util.RandomNumeric(6)
 	}

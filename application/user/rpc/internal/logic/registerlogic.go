@@ -2,9 +2,11 @@ package logic
 
 import (
 	"context"
-
+	"github.com/lustresix/beifeng/application/user/rpc/internal/e"
+	"github.com/lustresix/beifeng/application/user/rpc/internal/model"
 	"github.com/lustresix/beifeng/application/user/rpc/internal/svc"
 	"github.com/lustresix/beifeng/application/user/rpc/service"
+	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -23,8 +25,26 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 	}
 }
 
-func (l *RegisterLogic) Register(in *service.RegisterRequest) (*service.RegisterResponse, error) {
-	// todo: add your logic here and delete this line
+func (l *RegisterLogic) Register(i *service.RegisterRequest) (*service.RegisterResponse, error) {
+	if len(i.Username) == 0 {
+		return nil, e.RegisterNameEmpty
+	}
+	u := &model.User{
+		Username:   i.Username,
+		Mobile:     i.Mobile,
+		CreateTime: time.Now(),
+	}
 
-	return &service.RegisterResponse{}, nil
+	insert, err := l.svcCtx.UserModel.Insert(l.ctx, u)
+	if err != nil {
+		logx.Errorf("Insert UserModel error: %v", err)
+		return nil, err
+	}
+	lastInsertId, err := insert.LastInsertId()
+	if err != nil {
+		logx.Errorf("LastInsertId error: %v", err)
+		return nil, err
+	}
+
+	return &service.RegisterResponse{UserId: lastInsertId}, nil
 }

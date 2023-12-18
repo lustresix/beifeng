@@ -1,0 +1,165 @@
+# docker-compose.cluster.yml
+version: "3.0"
+
+networks:
+  etcd-net:           # 网络
+    driver: bridge    # 桥接模式
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.23.0/24
+          gateway: 192.168.23.1
+
+volumes:
+  etcd1_data:         # 挂载到本地的数据卷名
+    driver: local
+  etcd2_data:
+    driver: local
+  etcd3_data:
+    driver: local
+
+# etcd 其他环境配置见：https://doczhcn.gitbook.io/etcd/index/index-1/configuration
+services:
+  etcd1:
+    image: bitnami/etcd:3.5.0  # 镜像
+    container_name: etcd1       # 容器名 --name
+    restart: always             # 总是重启
+    networks:
+      - etcd-net                # 使用的网络 --network
+    ports:                      # 端口映射 -p
+      - "20079:2379"
+      - "20080:2380"
+    environment:                # 环境变量 --env
+      - ALLOW_NONE_AUTHENTICATION=yes                       # 允许不用密码登录
+      - ETCD_NAME=etcd1                                     # etcd 的名字
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd1:2380  # 列出这个成员的伙伴 URL 以便通告给集群的其他成员
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380           # 用于监听伙伴通讯的URL列表
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379         # 用于监听客户端通讯的URL列表
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd1:2379        # 列出这个成员的客户端URL，通告给集群中的其他成员
+      - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster             # 在启动期间用于 etcd 集群的初始化集群记号
+      - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380 # 为启动初始化集群配置
+      - ETCD_INITIAL_CLUSTER_STATE=new                      # 初始化集群状态
+    volumes:
+      - etcd1_data:/bitnami/etcd                            # 挂载的数据卷
+
+  etcd2:
+    image: bitnami/etcd:3.5.0
+    container_name: etcd2
+    restart: always
+    networks:
+      - etcd-net
+    ports:
+      - "20179:2379"
+      - "20180:2380"
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_NAME=etcd2
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd2:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd2:2379
+      - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
+      - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+    volumes:
+      - etcd2_data:/bitnami/etcd
+
+  etcd3:
+    image: bitnami/etcd:3.5.0
+    container_name: etcd3
+    restart: always
+    networks:
+      - etcd-net
+    ports:
+      - "20279:2379"
+      - "20280:2380"
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_NAME=etcd3
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd3:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd3:2379
+      - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
+      - ETCD_INITIAL_CLUSTER=etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      - ETCD_INITIAL_CLUSTER_STATE=new
+    volumes:
+      - etcd3_data:/bitnami/etcd
+
+  docker-etcdkeeper:
+    hostname: etcdkeeper
+    container_name: etcdkeeper
+    image: evildecay/etcdkeeper
+    ports:
+      - "28080:8080"
+    networks:
+      - etcd-net
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+
+  mysql:
+    image: registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative/mysql-test:5.7
+    restart: always
+    container_name: mysql-test
+    hostname: mysql-test
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      TZ: Asia/Shanghai
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./data:/var/lib/mysql
+      - ./conf/my.cnf:/etc/mysql/my.cnf
+    command:
+      --max_connections=1000
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --default-authentication-plugin=mysql_native_password
+    networks:
+      - etcd-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent localhost:3306 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+
+  redis-master:
+    image: registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative/redis:7.0.3
+    container_name: redis-master
+    hostname: redis-master
+    restart: always
+    volumes:
+      - ./config/master/redis.conf:/usr/local/redis/redis.conf
+    ports:
+      - "36379:6379"
+    command: [ "sh", "-c", "/usr/local/bin/redis-server /usr/local/redis/redis.conf --requirepass 123456789 ; tail -f /usr/local/redis/redis.log" ]
+    networks:
+      - etcd-net
+    healthcheck:
+      test: [ "CMD-SHELL", "netstat -tnlp|grep 6379 || exit 1" ]
+      interval: 10s
+      timeout: 20s
+      retries: 3
+    environment:
+      - REDIS_PASSWORD=123456789
+  redis-slave:
+      image: registry.cn-hangzhou.aliyuncs.com/bigdata_cloudnative/redis:7.0.3
+      restart: always
+      deploy:
+        replicas: 2
+      volumes:
+        - ./config/slave/redis.conf:/usr/local/redis/redis.conf
+      ports:
+        - "6379"
+      command: [ "sh","-c","/opt/apache/bootstrap.sh slave" ]
+      networks:
+        - etcd-net
+      healthcheck:
+        test: [ "CMD-SHELL", "netstat -tnlp|grep 6379  || exit 1" ]
+        interval: 10s
+        timeout: 10s
+        retries: 3
+      environment:
+        - REDIS_PASSWORD = 123123
