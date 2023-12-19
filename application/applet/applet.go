@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/lustresix/beifeng/pkg/xcode"
+	"github.com/zeromicro/go-zero/rest/httpx"
 
 	"github.com/lustresix/beifeng/application/applet/internal/config"
 	"github.com/lustresix/beifeng/application/applet/internal/handler"
@@ -26,6 +28,9 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
+
+	// 自定义错误处理方法
+	httpx.SetErrorHandler(xcode.ErrHandler)
 
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()

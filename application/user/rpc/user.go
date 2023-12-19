@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/lustresix/beifeng/pkg/interceptors"
 
 	"github.com/lustresix/beifeng/application/user/rpc/internal/config"
 	"github.com/lustresix/beifeng/application/user/rpc/internal/server"
@@ -32,6 +33,9 @@ func main() {
 			reflection.Register(grpcServer)
 		}
 	})
+
+	// 自定义拦截器
+	s.AddUnaryInterceptors(interceptors.ServerErrorInterceptor())
 	defer s.Stop()
 
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)

@@ -2,6 +2,7 @@ package interceptors
 
 import (
 	"context"
+	"github.com/lustresix/beifeng/pkg/xcode"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -12,8 +13,8 @@ func ClientErrorInterceptor() grpc.UnaryClientInterceptor {
 		err := invoker(ctx, method, req, reply, cc, opts...)
 		if err != nil {
 			grpcStatus, _ := status.FromError(err)
-			//TODO: 整合错误码
-			err = errors.WithMessage(nil, grpcStatus.Message())
+			xc := xcode.GrpcStatusToXCode(grpcStatus)
+			err = errors.WithMessage(xc, grpcStatus.Message())
 		}
 
 		return err
